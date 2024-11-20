@@ -40,13 +40,13 @@ def get_product_version(full_string: str) ->list:
     all_versions = [version.strip() for version in product_version.split(",")]
     return all_versions
 
-
+cve_list = []
 try:
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
         outer_div = soup.find_all('div', class_='otable otable-sticky otable-tech')
         outer_div = outer_div[1]
-        cve_list = []
+        
         if outer_div:
             inner_div = outer_div.find('div', class_='otable-w1')
 
@@ -111,15 +111,23 @@ try:
                             remedy_tag = columns[1].find('a', href=True)
                             if remedy_tag:
                                 remedy = remedy_tag['href']
+                            time.sleep(2)
                             cve_list[i].update({"Affected Products": product_names, 
                                                 "Affected Versions": product_versions,
                                                 "Remedy": remedy, "Severity": "High"})
+                            
+            table_div = soup.find_all('table', class_='otable-w2')
+            table_div = table_div[-1]
+            table_body = table_div.find('tbody')
+            rows = table_body.find_all('tr')
+            columns = rows[0].find_all('td')
+            score = columns[4].text
+            cve_list[i].update({"CVSS Score": score})
 
 except Exception as e:
     print(f"An error occurred: {e}")
 
 
 print(cve_list)
-
 
 
